@@ -5,9 +5,10 @@ MediSync AI is a smart healthcare assistant that integrates AI-powered chatbot, 
 
 MediSync AI is an intelligent healthcare assistant web platform designed to help users with symptom guidance, prescription analysis, insurance prediction, health reminders, and AI-powered chatbot support. The system is built for accessibility, simplicity, and real-time health assistance.
 
-🚀 Live Demo
+## 🚀 Live Demo
 
-🌐 Frontend: https://medisync-ai-110c3.web.app
+👉 Try the live project here:  
+https://medisync-ai-110c3.web.app
 
 🖥️ Backend: https://medisync-ai-backend.onrender.com
 
