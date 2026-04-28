@@ -1,4 +1,3 @@
-const auth = window.firebaseAuth;
 const db = window.firebaseDb;
 
 const reminderForm = document.getElementById('reminderForm');
@@ -23,142 +22,158 @@ const soundMap = {
 };
 
 if (!currentUid) {
-    alert('Please log in to manage your reminders.');
-    window.location.href = 'index.html';
+    alert("Please login first");
+    window.location.href = "index.html";
 }
 
-function showPopup(message, isError = false) {
-    popup.textContent = message;
-    popup.classList.toggle('error', isError);
-    popup.style.display = 'block';
-    setTimeout(() => {
-        popup.style.display = 'none';
-    }, 3000);
+// =========================
+// POPUP
+// =========================
+function showPopup(msg, error = false) {
+    popup.textContent = msg;
+    popup.classList.toggle("error", error);
+    popup.style.display = "block";
+
+    setTimeout(() => popup.style.display = "none", 3000);
 }
 
-function formatTimeToAmPm(time) {
-    if (!time) return '-';
-    const [hStr, mStr] = time.split(':');
-    let h = parseInt(hStr, 10);
-    const m = mStr;
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    if (h === 0) h = 12;
-    return `${h}:${m} ${ampm}`;
+// =========================
+// TIME FORMAT
+// =========================
+function formatTime(time) {
+    const [h, m] = time.split(":");
+    let hour = parseInt(h);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+    return `${hour}:${m} ${ampm}`;
 }
 
-function saveReminder(name, date, time, note, soundKey) {
-    const ref = db.ref('users/' + currentUid + '/reminders').push();
-    return ref.set({
-        name,
-        date,
-        time,
-        note: note || '',
-        sound: soundKey || 'chime',
-        createdAt: Date.now()
-    });
+// =========================
+// SAVE REMINDER
+// =========================
+function saveReminder(data) {
+    return db.ref("users/" + currentUid + "/reminders").push(data);
 }
 
+// =========================
+// LOAD REMINDERS
+// =========================
 function loadReminders() {
-    const ref = db.ref('users/' + currentUid + '/reminders').orderByChild('createdAt');
+    db.ref("users/" + currentUid + "/reminders").on("value", (snap) => {
+        reminderList.innerHTML = "";
 
-    ref.on('value', (snapshot) => {
-        const data = snapshot.val();
-        reminderList.innerHTML = '';
-
+        const data = snap.val();
         if (!data) {
-            reminderList.innerHTML = '<p style="font-size: 13px; color: #9ca3af; padding: 8px 10px;">No reminders yet. Add your first reminder above.</p>';
+            reminderList.innerHTML = "<p style='color:#9ca3af'>No reminders yet</p>";
             return;
         }
 
-        const reminders = Object.entries(data)
-            .map(([id, value]) => ({ id, ...value }))
-            .sort((a, b) => a.createdAt - b.createdAt);
+        Object.values(data).forEach(rem => {
+            const div = document.createElement("div");
+            div.className = "reminder-item";
 
-        reminders.forEach(rem => {
-            const item = document.createElement('div');
-            item.className = 'reminder-item';
-
-            const timeFormatted = formatTimeToAmPm(rem.time);
-
-            item.innerHTML = `
+            div.innerHTML = `
                 <div class="reminder-name">${rem.name}</div>
                 <div class="reminder-meta">
-                    Date: ${rem.date || '-'} &nbsp; | &nbsp; Time: ${timeFormatted}
+                    ${rem.date} | ${formatTime(rem.time)}
                 </div>
-                ${rem.note ? `<div class="reminder-note">Note: ${rem.note}</div>` : ''}
+                <div class="reminder-note">${rem.note || ""}</div>
             `;
-            reminderList.appendChild(item);
+
+            reminderList.appendChild(div);
         });
     });
 }
 
-function playReminderSound(soundKey) {
-    const audio = soundMap[soundKey] || soundMap['chime'];
+// =========================
+// SOUND
+// =========================
+function playSound(key) {
+    const audio = soundMap[key] || soundMap.chime;
     if (!audio) return;
-    try {
-        audio.currentTime = 0;
-        audio.play();
-    } catch (e) {
-        console.warn('Sound play blocked until user interacts.', e);
+
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+}
+
+// =========================
+// NOTIFICATION (REAL)
+// =========================
+function sendNotification(rem) {
+    if (Notification.permission === "granted") {
+        new Notification("💊 Health Reminder", {
+            body: rem.name + " - " + formatTime(rem.time),
+            icon: "https://cdn-icons-png.flaticon.com/512/2966/2966485.png"
+        });
     }
 }
 
-function startReminderWatcher() {
-    const ref = db.ref('users/' + currentUid + '/reminders');
+// =========================
+// SMART CHECKER (FIXED)
+// =========================
+function checkReminders() {
+    const now = new Date();
+    const today = now.toISOString().slice(0, 10);
+    const currentMin = now.getHours() * 60 + now.getMinutes();
 
-    ref.on('value', (snapshot) => {
-        const data = snapshot.val();
+    db.ref("users/" + currentUid + "/reminders").once("value", (snap) => {
+        const data = snap.val();
         if (!data) return;
-
-        const now = new Date();
-        const nowDateStr = now.toISOString().slice(0, 10);
-        const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
         Object.values(data).forEach(rem => {
             if (!rem.date || !rem.time) return;
 
-            const [hStr, mStr] = rem.time.split(':');
-            const remMinutes = parseInt(hStr, 10) * 60 + parseInt(mStr, 10);
+            const [h, m] = rem.time.split(":");
+            const remMin = parseInt(h) * 60 + parseInt(m);
 
-            if (rem.date === nowDateStr && remMinutes === nowMinutes) {
-                const msg = `Reminder: ${rem.name} (${formatTimeToAmPm(rem.time)})`;
-                showPopup(msg);
-                playReminderSound(rem.sound || 'chime');
+            // allow 1 minute window (fix missed alerts)
+            if (rem.date === today && Math.abs(remMin - currentMin) <= 1) {
+
+                showPopup("⏰ " + rem.name);
+                playSound(rem.sound);
+
+                sendNotification(rem);
             }
         });
     });
 }
 
-reminderForm.addEventListener('submit', (e) => {
+// =========================
+// FORM SUBMIT
+// =========================
+reminderForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    const name = document.getElementById('reminderName').value.trim();
-    const date = document.getElementById('reminderDate').value;
-    const time = document.getElementById('reminderTime').value;
-    const note = document.getElementById('reminderNote').value.trim();
-    const soundKey = document.getElementById('reminderSound').value;
+    const data = {
+        name: document.getElementById("reminderName").value,
+        date: document.getElementById("reminderDate").value,
+        time: document.getElementById("reminderTime").value,
+        note: document.getElementById("reminderNote").value,
+        sound: document.getElementById("reminderSound").value,
+        createdAt: Date.now()
+    };
 
-    if (!name || !date || !time) {
-        showPopup('Please fill reminder name, date, and time.', true);
-        return;
-    }
-
-    saveReminder(name, date, time, note, soundKey)
+    saveReminder(data)
         .then(() => {
-            showPopup('Reminder added for ' + currentUsername + '!');
+            showPopup("Reminder saved ✔");
             reminderForm.reset();
         })
-        .catch((err) => {
-            console.error(err);
-            showPopup('Failed to save reminder.', true);
-        });
+        .catch(() => showPopup("Error saving reminder", true));
 });
 
-testSoundBtn.addEventListener('click', () => {
-    const soundKey = document.getElementById('reminderSound').value;
-    playReminderSound(soundKey);
+// =========================
+// TEST SOUND
+// =========================
+testSoundBtn.addEventListener("click", () => {
+    const key = document.getElementById("reminderSound").value;
+    playSound(key);
 });
 
+// =========================
+// START
+// =========================
 loadReminders();
-startReminderWatcher();
+
+// 🔥 FIX: runs every 15 seconds so no missed reminders
+setInterval(checkReminders, 15000);
+checkReminders();
