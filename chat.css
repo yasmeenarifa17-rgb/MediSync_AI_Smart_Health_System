@@ -125,19 +125,19 @@ body {
 }
 
 .message.user {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #2563eb;
     color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 6px;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    margin-left: auto;
+    padding: 10px;
+    border-radius: 10px;
 }
 
-.message.ai {
-    background: #313244;
-    color: #cdd6f4;
-    align-self: flex-start;
-    border-bottom-left-radius: 6px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+.message.bot {
+    background: #334155;
+    color: white;
+    margin-right: auto;
+    padding: 10px;
+    border-radius: 10px;
 }
 
 .message .sender {
