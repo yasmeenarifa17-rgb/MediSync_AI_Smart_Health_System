@@ -1,131 +1,237 @@
-// Insurance Predictor JavaScript
 
 let selectedFile = null;
 let cameraStream = null;
 
-// Mock result for insurance
-const mockResult = "Insurance document analyzed. Coverage details detected: Your plan includes the requested benefits. We recommend verifying specific coverage limits with your insurance provider for complete accuracy.";
-
-// Camera Functions
+// ---------------- CAMERA ----------------
 async function startCamera() {
     const cameraContainer = document.getElementById('cameraContainer');
     const video = document.getElementById('cameraVideo');
-    
+
     try {
-        cameraStream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: 'environment' } 
+        cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
         });
+
         video.srcObject = cameraStream;
-        cameraContainer.style.display = 'block';
+        cameraContainer.style.display = "block";
+
     } catch (err) {
-        alert("Unable to access camera. Please check permissions.");
-        console.error("Camera error:", err);
+        alert("Camera not available or permission denied.");
+        console.error(err);
     }
 }
 
 function capturePhoto() {
     const video = document.getElementById('cameraVideo');
     const canvas = document.getElementById('cameraCanvas');
-    const previewContainer = document.getElementById('previewContainer');
-    const imagePreview = document.getElementById('imagePreview');
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const cameraContainer = document.getElementById('cameraContainer');
-    
+
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
+
     canvas.getContext('2d').drawImage(video, 0, 0);
-    
-    const dataUrl = canvas.toDataURL('image/jpeg');
-    imagePreview.src = dataUrl;
-    previewContainer.style.display = 'block';
-    analyzeBtn.disabled = false;
-    
-    // Convert to file
-    canvas.toBlob((blob) => {
-        selectedFile = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
-    }, 'image/jpeg');
-    
+
+    canvas.toBlob(blob => {
+        selectedFile = new File([blob], "report.jpg", { type: "image/jpeg" });
+        showPreview(URL.createObjectURL(blob));
+    }, "image/jpeg");
+
     closeCamera();
 }
 
 function closeCamera() {
     const cameraContainer = document.getElementById('cameraContainer');
+
     if (cameraStream) {
-        cameraStream.getTracks().forEach(track => track.stop());
-        cameraStream = null;
+        cameraStream.getTracks().forEach(t => t.stop());
     }
-    cameraContainer.style.display = 'none';
+
+    cameraContainer.style.display = "none";
 }
 
+// ---------------- FILE ----------------
 function handleFileSelect(event) {
     const file = event.target.files[0];
-    if (file) {
-        selectedFile = file;
-        showPreview(file);
-    }
+    if (!file) return;
+
+    selectedFile = file;
+    showPreview(URL.createObjectURL(file));
 }
 
-function showPreview(file) {
+function showPreview(src) {
     const previewContainer = document.getElementById('previewContainer');
     const imagePreview = document.getElementById('imagePreview');
     const analyzeBtn = document.getElementById('analyzeBtn');
 
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        imagePreview.src = e.target.result;
-        previewContainer.style.display = 'block';
-        analyzeBtn.disabled = false;
-    };
-    reader.readAsDataURL(file);
+    imagePreview.src = src;
+    previewContainer.style.display = "block";
+    analyzeBtn.disabled = false;
 }
 
 function removeImage() {
     selectedFile = null;
-    document.getElementById('fileInput').value = '';
-    document.getElementById('previewContainer').style.display = 'none';
+    document.getElementById('fileInput').value = "";
+    document.getElementById('previewContainer').style.display = "none";
+    document.getElementById('resultContainer').style.display = "none";
     document.getElementById('analyzeBtn').disabled = true;
-    document.getElementById('resultContainer').style.display = 'none';
 }
 
-function openCamera() {
-    // Camera is now functional - triggers the hidden file input
-    document.getElementById('cameraInput').click();
-}
-
-function handleCameraCapture(event) {
-    const file = event.target.files[0];
-    if (file) {
-        selectedFile = file;
-        showPreview(file);
+// ---------------- OCR ----------------
+async function extractText(file) {
+    try {
+        const res = await Tesseract.recognize(file, "eng");
+        return res.data.text || "";
+    } catch (err) {
+        console.error("OCR error:", err);
+        return "";
     }
 }
 
-function analyzeImage() {
-    const analyzeBtn = document.getElementById('analyzeBtn');
-    const loading = document.getElementById('loading');
-    const resultContainer = document.getElementById('resultContainer');
-    const resultText = document.getElementById('resultText');
+// ---------------- MEDICAL PARSER ----------------
+function parseMedicalReport(text) {
+    text = text.toLowerCase();
 
-    // Show loading
-    analyzeBtn.style.display = 'none';
-    loading.style.display = 'block';
+    const data = {
+        name: extract(text, ["name", "patient"]),
+        age: parseInt(extract(text, ["age"])) || 0,
+        hospital: extract(text, ["hospital", "clinic"]),
+        id: extract(text, ["id", "patient id", "application"]),
+        disease: detectDisease(text),
+        severity: detectSeverity(text)
+    };
 
-    // Simulate analysis delay
-    setTimeout(() => {
-        // Hide loading
-        loading.style.display = 'none';
+    return data;
+}
 
-        // Show result
-        resultText.textContent = mockResult;
-        resultContainer.style.display = 'block';
+function extract(text, keys) {
+    for (let k of keys) {
+        const match = text.match(new RegExp(`${k}[:\\s-]*([a-zA-Z0-9 ]{2,30})`, "i"));
+        if (match) return match[1].trim();
+    }
+    return "Not Found";
+}
 
-        // Add animation
-        resultContainer.style.opacity = '0';
-        resultContainer.style.transform = 'translateY(20px)';
-        
-        setTimeout(() => {
-            resultContainer.style.opacity = '1';
-            resultContainer.style.transform = 'translateY(0)';
-        }, 50);
-    }, 2000);
+function detectDisease(text) {
+    if (text.includes("diabetes")) return "Diabetes";
+    if (text.includes("bp") || text.includes("blood pressure")) return "Hypertension";
+    if (text.includes("asthma")) return "Asthma";
+    if (text.includes("fever")) return "Fever";
+    if (text.includes("infection")) return "Infection";
+    return "General";
+}
+
+function detectSeverity(text) {
+    if (text.includes("severe") || text.includes("critical")) return "High";
+    if (text.includes("moderate")) return "Medium";
+    return "Low";
+}
+
+// ---------------- RISK ENGINE ----------------
+function calculateRisk(data) {
+    let score = 0;
+
+    if (data.age > 60) score += 2;
+    if (data.age > 40) score += 1;
+
+    if (data.disease === "Diabetes" || data.disease === "Hypertension") score += 2;
+    if (data.severity === "High") score += 2;
+    if (data.severity === "Medium") score += 1;
+
+    if (score >= 5) return "High Risk";
+    if (score >= 3) return "Medium Risk";
+    return "Low Risk";
+}
+
+// ---------------- INSURANCE ENGINE ----------------
+function getInsurance(data, risk) {
+    let options = [];
+
+    // Government schemes
+    if (data.age <= 70) {
+        options.push({
+            name: "Ayushman Bharat (Govt)",
+            link: "https://pmjay.gov.in/"
+        });
+    }
+
+    if (data.disease === "Diabetes" || data.disease === "Hypertension") {
+        options.push({
+            name: "ESIC Health Scheme",
+            link: "https://www.esic.gov.in/"
+        });
+    }
+
+    // Private insurance
+    options.push(
+        {
+            name: "HDFC ERGO Health Insurance",
+            link: "https://www.hdfcergo.com/health-insurance"
+        },
+        {
+            name: "Star Health Insurance",
+            link: "https://www.starhealth.in/"
+        }
+    );
+
+    // prioritize based on risk
+    if (risk === "High Risk") {
+        options.unshift({
+            name: "Priority Medical Coverage (Recommended First)",
+            link: "https://pmjay.gov.in/"
+        });
+    }
+
+    return options;
+}
+
+// ---------------- MAIN ANALYSIS ----------------
+async function analyzeImage() {
+    const loading = document.getElementById("loading");
+    const resultContainer = document.getElementById("resultContainer");
+    const resultText = document.getElementById("resultText");
+
+    loading.style.display = "block";
+
+    if (!selectedFile) {
+        loading.style.display = "none";
+        alert("Please upload a file first");
+        return;
+    }
+
+    const text = await extractText(selectedFile);
+
+    if (!text || text.length < 10) {
+        loading.style.display = "none";
+        resultText.innerHTML = "❌ OCR failed. Please upload a clearer image.";
+        resultContainer.style.display = "block";
+        return;
+    }
+
+    const data = parseMedicalReport(text);
+    const risk = calculateRisk(data);
+    const insurance = getInsurance(data, risk);
+
+    loading.style.display = "none";
+
+    let html = `
+        📄 <b>AI Medical Report Analysis</b><br><br>
+
+        👤 Name: ${data.name}<br>
+        🎂 Age: ${data.age}<br>
+        🏥 Hospital: ${data.hospital}<br>
+        🆔 ID: ${data.id}<br>
+        💊 Disease: ${data.disease}<br>
+        ⚠ Severity: ${data.severity}<br>
+        📊 Risk Level: <b>${risk}</b><br><br>
+
+        <b>🏥 Recommended Insurance Plans:</b><br>
+    `;
+
+    insurance.forEach(i => {
+        html += `✔ <a href="${i.link}" target="_blank">${i.name}</a><br>`;
+    });
+
+    html += `<br><i>⚡ AI-based eligibility + risk scoring applied</i>`;
+
+    resultText.innerHTML = html;
+    resultContainer.style.display = "block";
 }
