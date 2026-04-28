@@ -1,128 +1,146 @@
-// Health Q&A JavaScript
+// Health Q&A - Improved Dynamic Version
 
-// Questions data
-const questions = [
+const questionPool = [
     {
         question: "Do you experience frequent headaches?",
-        answers: ["Yes", "No", "Maybe"]
-    },
-    {
-        question: "Do you have trouble sleeping at night?",
+        tag: "headache",
         answers: ["Yes", "No", "Sometimes"]
     },
     {
-        question: "Do you feel fatigued during the day?",
+        question: "Do you feel tired even after rest?",
+        tag: "fatigue",
         answers: ["Yes", "No", "Occasionally"]
+    },
+    {
+        question: "Do you have trouble sleeping at night?",
+        tag: "sleep",
+        answers: ["Yes", "No", "Sometimes"]
+    },
+    {
+        question: "Do you feel dizziness or weakness often?",
+        tag: "dizziness",
+        answers: ["Yes", "No", "Rarely"]
+    },
+    {
+        question: "Do you experience stomach discomfort or acidity?",
+        tag: "digestion",
+        answers: ["Yes", "No", "Sometimes"]
+    },
+    {
+        question: "Do you stay hydrated (drink enough water daily)?",
+        tag: "hydration",
+        answers: ["Yes", "No", "Not sure"]
     }
 ];
 
-// Mock results based on answers
-const mockResults = [
-    "Based on your answers, we recommend staying hydrated and maintaining regular sleep patterns. If symptoms persist, please consult a healthcare professional.",
-    "Your responses suggest you may benefit from stress management techniques and regular exercise. Consider speaking with a doctor if symptoms continue.",
-    "We recommend reviewing your daily routine and ensuring you're getting adequate nutrition and rest. A check-up with your physician might be helpful.",
-    "Your answers indicate a balanced lifestyle, but maintaining regular health check-ups is always recommended for optimal well-being."
-];
+// Strong medical-style insights (safe general guidance)
+const insights = {
+    headache: "Frequent headaches may be linked to stress, dehydration, or screen fatigue. Maintain hydration and rest.",
+    fatigue: "Fatigue can indicate low sleep quality, iron deficiency, or stress. Improve sleep routine and diet.",
+    sleep: "Irregular sleep affects mental and physical health. Try consistent sleep timing.",
+    dizziness: "Dizziness may occur due to low BP, dehydration, or skipping meals.",
+    digestion: "Digestive discomfort may be related to diet. Avoid oily/spicy food.",
+    hydration: "Proper hydration is essential for body function and energy levels."
+};
 
 let currentQuestion = 0;
 let answers = [];
+let selectedQuestions = [];
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
+// initialize dynamic questions
+document.addEventListener("DOMContentLoaded", () => {
+    generateQuestions();
     updateProgress();
 });
 
+// randomly pick 3–4 questions each session
+function generateQuestions() {
+    selectedQuestions = questionPool
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3);
+}
+
 function updateProgress() {
-    const progressText = document.getElementById('progressText');
-    const progressFill = document.getElementById('progressFill');
-    const questionText = document.getElementById('questionText');
-    const buttonGroup = document.getElementById('buttonGroup');
+    const progressText = document.getElementById("progressText");
+    const progressFill = document.getElementById("progressFill");
+    const questionText = document.getElementById("questionText");
+    const buttonGroup = document.getElementById("buttonGroup");
 
-    // Update progress text and bar
-    progressText.textContent = `Step ${currentQuestion + 1} of ${questions.length}`;
-    progressFill.style.width = `${((currentQuestion + 1) / questions.length) * 100}%`;
+    const q = selectedQuestions[currentQuestion];
 
-    // Update question
-    questionText.textContent = questions[currentQuestion].question;
+    progressText.textContent = `Step ${currentQuestion + 1} of ${selectedQuestions.length}`;
+    progressFill.style.width = `${((currentQuestion + 1) / selectedQuestions.length) * 100}%`;
 
-    // Update buttons
-    buttonGroup.innerHTML = '';
-    questions[currentQuestion].answers.forEach(answer => {
-        const btn = document.createElement('button');
-        btn.className = 'answer-btn';
-        btn.textContent = answer;
-        btn.onclick = () => handleAnswer(answer.toLowerCase());
+    questionText.textContent = q.question;
+
+    buttonGroup.innerHTML = "";
+    q.answers.forEach(ans => {
+        const btn = document.createElement("button");
+        btn.className = "answer-btn";
+        btn.textContent = ans;
+        btn.onclick = () => handleAnswer(ans.toLowerCase(), q.tag);
         buttonGroup.appendChild(btn);
     });
 }
 
-function handleAnswer(answer) {
-    answers.push(answer);
+function handleAnswer(answer, tag) {
+    answers.push({ tag, answer });
+
     currentQuestion++;
 
-    if (currentQuestion < questions.length) {
-        // Animate transition
-        const card = document.getElementById('questionCard');
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
+    const card = document.getElementById("questionCard");
+
+    if (currentQuestion < selectedQuestions.length) {
+        card.style.opacity = "0";
 
         setTimeout(() => {
             updateProgress();
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-        }, 300);
+            card.style.opacity = "1";
+        }, 250);
     } else {
-        // Show result
         showResult();
     }
 }
 
+function generateFinalInsight() {
+    let result = [];
+
+    answers.forEach(a => {
+        if (a.answer === "yes" || a.answer === "sometimes" || a.answer === "occasionally") {
+            result.push(insights[a.tag]);
+        }
+    });
+
+    if (result.length === 0) {
+        return "Your responses look balanced. Maintain healthy lifestyle habits like sleep, hydration, and nutrition.";
+    }
+
+    return result.join(" ");
+}
+
 function showResult() {
-    const questionCard = document.getElementById('questionCard');
-    const resultCard = document.getElementById('resultCard');
-    const resultText = document.getElementById('resultText');
+    const questionCard = document.getElementById("questionCard");
+    const resultCard = document.getElementById("resultCard");
+    const resultText = document.getElementById("resultText");
 
-    // Generate mock result based on answers
-    const resultIndex = Math.floor(Math.random() * mockResults.length);
-    resultText.textContent = mockResults[resultIndex];
+    const finalText = generateFinalInsight();
 
-    // Animate transition
-    questionCard.style.opacity = '0';
-    questionCard.style.transform = 'translateY(-20px)';
+    questionCard.style.display = "none";
+    resultCard.style.display = "block";
 
-    setTimeout(() => {
-        questionCard.style.display = 'none';
-        resultCard.style.display = 'block';
-        resultCard.style.opacity = '0';
-        resultCard.style.transform = 'translateY(20px)';
-
-        setTimeout(() => {
-            resultCard.style.opacity = '1';
-            resultCard.style.transform = 'translateY(0)';
-        }, 50);
-    }, 300);
+    resultText.textContent = finalText;
 }
 
 function restartQuiz() {
     currentQuestion = 0;
     answers = [];
+    generateQuestions();
 
-    const questionCard = document.getElementById('questionCard');
-    const resultCard = document.getElementById('resultCard');
+    const questionCard = document.getElementById("questionCard");
+    const resultCard = document.getElementById("resultCard");
 
-    resultCard.style.opacity = '0';
-    resultCard.style.transform = 'translateY(-20px)';
+    resultCard.style.display = "none";
+    questionCard.style.display = "block";
 
-    setTimeout(() => {
-        resultCard.style.display = 'none';
-        questionCard.style.display = 'block';
-        questionCard.style.opacity = '0';
-        questionCard.style.transform = 'translateY(20px)';
-
-        setTimeout(() => {
-            updateProgress();
-            questionCard.style.opacity = '1';
-            questionCard.style.transform = 'translateY(0)';
-        }, 50);
-    }, 300);
+    updateProgress();
 }
