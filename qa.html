@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Q&A - AI Health Assistant</title>
+    <link rel="stylesheet" href="qa.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Back Button -->
+        <a href="dashboard.html" class="back-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back
+        </a>
+
+        <!-- Header -->
+        <div class="header">
+            <h1>Health Q&A</h1>
+            <p class="subtitle">Answer a few questions to get basic guidance</p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="card" id="questionCard">
+            <!-- Progress Indicator -->
+            <div class="progress">
+                <span id="progressText">Step 1 of 3</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <!-- Question -->
+            <h2 class="question-text" id="questionText">Do you experience frequent headaches?</h2>
+
+            <!-- Answer Buttons -->
+            <div class="button-group" id="buttonGroup">
+                <button class="answer-btn" onclick="handleAnswer('yes')">Yes</button>
+                <button class="answer-btn" onclick="handleAnswer('no')">No</button>
+                <button class="answer-btn" onclick="handleAnswer('maybe')">Maybe</button>
+            </div>
+        </div>
+
+        <!-- Result Card (Hidden initially) -->
+        <div class="card result-card" id="resultCard" style="display: none;">
+            <div class="result-icon">💡</div>
+            <h2>Suggestion</h2>
+            <p class="result-text" id="resultText">Based on your answers, we recommend staying hydrated and maintaining regular sleep patterns. If symptoms persist, please consult a healthcare professional.</p>
+            <button class="restart-btn" onclick="restartQuiz()">Start Over</button>
+        </div>
+    </div>
+
+    <script src="qa.js"></script>
+</body>
+</html>
