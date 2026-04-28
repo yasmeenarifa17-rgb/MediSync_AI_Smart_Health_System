@@ -10,10 +10,12 @@
     <div class="container">
         <h1>AI Health Assistant</h1>
         <h2 id="welcomeText">Welcome!</h2>
+<p id="dailyQuote" style="margin-top:8px; color:#9ca3af;"></p>
 
         <p class="intro">
             Your personal AI-powered healthcare companion — choose a tool below to get started:
         </p>
+        <p id="quote"></p>
 
         <div class="grid">
             <div class="card">
@@ -51,15 +53,56 @@
         </div>
     </div>
 
-    <script>
-        const username = localStorage.getItem('medisync_username');
-        const welcomeEl = document.getElementById('welcomeText');
+<script>
+    const username = localStorage.getItem('medisync_username') || 'User';
 
-        if (username && welcomeEl) {
-            welcomeEl.textContent = 'Welcome, ' + username + ' 👋';
-        } else if (welcomeEl) {
-            welcomeEl.textContent = 'Welcome!';
-        }
-    </script>
+    // Welcome text
+    const welcomeEl = document.getElementById('welcomeText');
+    if (welcomeEl) {
+        welcomeEl.innerText = "Welcome, " + username + " 👋";
+    }
+
+    // Quotes
+    const quotes = [
+        "Your health is your greatest wealth.",
+        "Small steps today lead to big health tomorrow.",
+        "Take your medicine on time.",
+        "Healing takes time — stay patient.",
+        "Stay strong, recovery is a journey.",
+        "Every healthy choice matters.",
+        "Consistency beats intensity.",
+        "Listen to your body.",
+        "Rest is also productive.",
+        "Health is a daily habit.",
+        "Stay positive, stay healing.",
+        "You deserve a healthy life.",
+        "Take care of your body.",
+        "Progress, not perfection.",
+        "Hydrate yourself well.",
+        "Discipline = healthy future.",
+        "Wellness starts within.",
+        "Push yourself gently.",
+        "You are stronger than you think.",
+        "Health is real wealth.",
+        "Stay committed to healing.",
+        "Take one step at a time.",
+        "Good habits build health.",
+        "Self-care matters.",
+        "Consistency creates results.",
+        "Your body needs care.",
+        "Stay motivated daily.",
+        "Focus on your health.",
+        "Better health, better life.",
+        "Keep going, you're doing great."
+    ];
+
+    const today = new Date().getDate();
+    const quote = quotes[today % quotes.length];
+
+    const quoteEl = document.getElementById('dailyQuote');
+    if (quoteEl) {
+        quoteEl.innerText = quote;
+    }
+</script>
 </body>
 </html>
