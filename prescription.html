@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prescription Analyzer - AI Health Assistant</title>
+    <link rel="stylesheet" href="qa.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Back Button -->
+        <a href="dashboard.html" class="back-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            Back
+        </a>
+
+        <!-- Header -->
+        <div class="header">
+            <h1>💊 Prescription Analyzer</h1>
+            <p class="subtitle">Upload your prescription for AI-powered analysis</p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="card upload-card">
+            <!-- Upload Area -->
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📄</div>
+                <p class="upload-text">Drag & drop your file here or</p>
+                <label class="file-label">
+                    <input type="file" id="fileInput" accept="image/*,.pdf" onchange="handleFileSelect(event)">
+                    Browse Files
+                </label>
+            </div>
+
+            <!-- Camera Button -->
+            <button class="camera-btn" onclick="startCamera()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                </svg>
+                Open Camera
+            </button>
+
+            <!-- Camera Preview -->
+            <div class="camera-container" id="cameraContainer" style="display: none;">
+                <video id="cameraVideo" autoplay playsinline></video>
+                <button class="capture-btn" onclick="capturePhoto()">📸 Capture</button>
+                <button class="close-camera-btn" onclick="closeCamera()">✕ Close</button>
+            </div>
+            <canvas id="cameraCanvas" style="display: none;"></canvas>
+
+            <!-- Image Preview -->
+            <div class="preview-container" id="previewContainer" style="display: none;">
+                <img id="imagePreview" class="image-preview" alt="Preview">
+                <button class="remove-btn" onclick="removeImage()">×</button>
+            </div>
+
+            <!-- Analyze Button -->
+            <button class="analyze-btn" id="analyzeBtn" onclick="analyzeImage()" disabled>
+                Analyze
+            </button>
+
+            <!-- Loading State -->
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Analyzing...</p>
+            </div>
+
+            <!-- Result -->
+            <div class="result-container" id="resultContainer" style="display: none;">
+                <div class="result-icon">✅</div>
+                <h3>Analysis Complete</h3>
+                <p class="result-text" id="resultText">Your prescription has been analyzed. Key findings: The medication is a common treatment for the indicated condition. Please consult with your pharmacist for detailed information about dosage and interactions.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="prescription.js"></script>
+</body>
+</html>

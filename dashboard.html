@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <div class="container">
+        <h1>AI Health Assistant</h1>
+        <h2 id="welcomeText">Welcome!</h2>
+
+        <p class="intro">
+            Your personal AI-powered healthcare companion — choose a tool below to get started:
+        </p>
+
+        <div class="grid">
+            <div class="card">
+                <span>📊 Insurance Predictor</span>
+                <p class="desc">Estimate your insurance premiums based on health data & lifestyle factors.</p>
+                <a href="insurance.html">Click Here</a>
+            </div>
+
+            <div class="card">
+                <span>💊 Prescription Analyzer</span>
+                <p class="desc">Upload prescriptions for AI-powered drug interaction & dosage checks.</p>
+                <a href="prescription.html">Click Here</a>
+            </div>
+
+            <div class="card">
+                <span>🧠 Health Q&A</span>
+                <p class="desc">Get instant answers to common health questions from our AI knowledge base.</p>
+                <a href="qa.html">Click Here</a>
+            </div>
+
+            <div class="card">
+                <span>💬 Friendly Chat</span>
+                <p class="desc">Have a casual conversation with an AI assistant for daily health support.</p>
+                <a href="chat.html">Click Here</a>
+            </div>
+
+            <!-- NEW: Reminders feature card -->
+            <div class="card">
+                <span>⏰ Health Reminders</span>
+                <p class="desc">
+                    Set and manage reminders for medicines, water, fruits, and your daily wellness routine.
+                </p>
+                <a href="reminders.html">Click Here</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const username = localStorage.getItem('medisync_username');
+        const welcomeEl = document.getElementById('welcomeText');
+
+        if (username && welcomeEl) {
+            welcomeEl.textContent = 'Welcome, ' + username + ' 👋';
+        } else if (welcomeEl) {
+            welcomeEl.textContent = 'Welcome!';
+        }
+    </script>
+</body>
+</html>
